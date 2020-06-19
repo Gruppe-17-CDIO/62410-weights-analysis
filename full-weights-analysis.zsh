@@ -10,22 +10,38 @@ images=("all-clubs" "all-diamonds" "all-hearts" "all-spades" \
 "solitaire-simple-nomove-nodeck")
 
 
-# Find the darknet folder
-if [ "$(basename $PWD)" = "darknet" ]; then
-	echo "Found the darknet folder. It is the current directory."
-elif [ -d "darknet" ]; then
-	cd darknet && echo "Found the darknet folder. Entering." \
-    || echo "Unable to enter the darknet folder."
+# Looking for the darknet outside the current directory
+# If no success then it asks the user for the directory path
+if [ -d "../darknet" ]; then
+    cd ../darknet && \
+    echo "Found the darknet folder outside the current directory. Entering."
 else
-    # Looking for the darknet outside the current directory
-    cd ..
-    if [ -d "darknet" ]; then
-        cd darknet && \
-        echo "Found the darknet folder outside the current directory. Entering."
-    else
-        echo "Failed to find the darknet folder."
-        echo "Place this script near the darknet folder or inside it."
-    fi
+    echo "This project does not share directory with darknet."
+    while [[ true ]]; do
+        echo "Please specify the absolute path to darknet:"
+        read absolute_path
+        echo ""
+
+        if [ "$(basename ${absolute_path})" = "darknet" ]; then
+            cd ${absolute_path} && \
+            echo "Looks like darknet alright. Entering." && break
+
+            echo "Unable to change directory to the specified path. Try again."
+            continue
+        fi
+
+        echo "The basename of the given directory was not 'darknet'."
+        echo "Are you sure this is darknet?"
+        echo "(y/n)"
+        read answer
+        echo ""
+        if [ "${answer}" = "y" ]; then
+            cd ${absolute_path}
+            break
+        fi
+
+        echo "The darknet directory needs to be specified."
+    done
 fi
 
 
@@ -221,7 +237,7 @@ while [[ true ]]; do
     if [ "${answer}" = "y" ]; then
         tail -7 ${path_collected_results}
         break
-    elif [ "${answer}" = "n" ]
+    elif [ "${answer}" = "n" ]; then
         break
     fi
     echo "Unrecognized input."

@@ -21,10 +21,10 @@ else
     cd ..
     if [ -d "darknet" ]; then
         cd darknet && \
-        echo "Found the darknet folder outside the current directory. Entering"
+        echo "Found the darknet folder outside the current directory. Entering."
     else
-        echo "Failed to find the darknet folder. Put this script in the same \
-        directory where darknet is or inside the darknet folder."
+        echo "Failed to find the darknet folder."
+        echo "Place this script near the darknet folder or inside it."
     fi
 fi
 
@@ -33,7 +33,7 @@ fi
 if [ -d "test-output" ]; then
     while [[ true ]]; do
         echo "Found an existing test-output directory. Would you like to delete it?"
-        echo "y/n"
+        echo "(y/n)"
         read answer
         if [ "${answer}" = "y" ]; then
             echo "Deleting test-output directory"
@@ -51,19 +51,6 @@ mkdir test-output && echo "Created a test-output directory."
 
 path_collected_results="analysis-collected-results.out"
 echo "---------- collected analysis results ----------" > ${path_collected_results}
-echo "How to read output:" >> ${path_collected_results}
-echo "darknet execution time .....: time in seconds for darknet to run its detection" \
->> ${path_collected_results}
-echo "average detection percentage: darknets average detection percent for each card" \
->> ${path_collected_results}
-echo "correct detection ..........: total corners detected with correct suit and value / total corners visible" \
->> ${path_collected_results}
-echo "false detection ............: total corners detected with a wrong suit / total corners detected" \
->> ${path_collected_results}
-echo "ignored cards ..............: total cards without any detected corner / total cards visible" \
->> ${path_collected_results}
-echo "" >> ${path_collected_results}
-
 
 path_temp_sorted_actual="test-output/temp_sorted_actual.txt"
 path_temp_sorted_detected="test-output/temp_sorted_detected.txt"
@@ -213,3 +200,29 @@ done
 # Printing everything in the collected results txt file
 clear
 cat ${path_collected_results}
+
+echo "How to read output:" >> ${path_collected_results}
+echo "darknet execution time .....: time in seconds for darknet to run its detection" \
+>> ${path_collected_results}
+echo "average detection percentage: darknets average detection percent for each card" \
+>> ${path_collected_results}
+echo "correct detection ..........: total corners detected with correct suit and value / total corners visible" \
+>> ${path_collected_results}
+echo "false detection ............: total corners detected with a wrong suit / total corners detected" \
+>> ${path_collected_results}
+echo "ignored cards ..............: total cards without any detected corner / total cards visible" \
+>> ${path_collected_results}
+echo "" >> ${path_collected_results}
+
+while [[ true ]]; do
+    echo "Would you like information on how to read the output?"
+    echo "(y/n)"
+    read answer
+    if [ "${answer}" = "y" ]; then
+        tail -7 ${path_collected_results}
+        break
+    elif [ "${answer}" = "n" ]
+        break
+    fi
+    echo "Unrecognized input."
+done

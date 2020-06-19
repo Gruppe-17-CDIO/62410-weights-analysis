@@ -17,8 +17,15 @@ elif [ -d "darknet" ]; then
 	cd darknet && echo "Found the darknet folder. Entering." \
     || echo "Unable to enter the darknet folder."
 else
-	echo "Failed to find the darknet folder. Put this script in the same \
-    directory where darknet is or inside the darknet folder."
+    # Looking for the darknet outside the current directory
+    cd ..
+    if [ -d "darknet" ]; then
+        cd darknet && \
+        echo "Found the darknet folder outside the current directory. Entering"
+    else
+        echo "Failed to find the darknet folder. Put this script in the same \
+        directory where darknet is or inside the darknet folder."
+    fi
 fi
 
 
@@ -34,11 +41,15 @@ path_collected_results="test-results/analysis-collected-results.out"
 # Data analysis loop, goes through each image for each weights file
 for weight_name in ${weights[*]}; do
 
-    # Each weights file's average guessing percentage
-    avg_percent=0.0
-    possible_detections=0
-    actual_detections=0
+    # Each weights file's results initialisation
     darknet_exec_time=0.0
+    avg_percent=0.0
+
+    possible_detections=0
+    hits=0
+    guesses=0
+    misses=0
+
 
     # The paths of existing files and result saving destination
     path_file_cfg="test-files/${weight_name}.cfg"
@@ -63,7 +74,7 @@ for weight_name in ${weights[*]}; do
         ./darknet detector test cfg/owndata.data ${path_file_cfg} \
         ${path_file_weights} ${path_image_png} > ${path_result_full}
         end_time=$(date +%s.%N)
-        echo "${end_time} - ${start_time} = $((end_time - start_time))"
+        echo "Execution time $((end_time - start_time)) seconds"
         darknet_exec_time=$(($darknet_exec_time + (end_time - start_time)))
 
 
@@ -81,24 +92,31 @@ for weight_name in ${weights[*]}; do
         possible_detections=$(( $possible_detections + \
         $(cat ${path_image_txt} | wc -l) ))
 
-        # TODO: do a proper check of actual detections
-        actual_detections=$(( $actual_detections + \
-        $(cat ${path_result_cards} | wc -l) ))
-
+        # Find how many correct guesses it had and how many wrong
+        guesses=$(( ${guesses} + $(cat ${path_result_cards} | wc -l) ))
+        sort ${path_image_txt} | uniq > temp.txt
         while read possible; do
-            echo "${possible}"
-        done < $(sort ${path_image_txt} | uniq)
+            hits=$(( ${hits} + $(cat ${path_result_cards} | grep ${possible} | wc -l) ))
+            sed -i "/${possible}/d" ${path_result_cards}
+        done < temp.txt
+        rm temp.txt
+        misses=$(( ${misses} + $(cat ${path_result_cards} | wc -l) ))
 
+        # Print the collective hits as of this image
+        twodecimals=$(printf '%.3f' \
+        "$((${hits}.0/${possible_detections}.0))") \
+        && echo "Correctly detected ${hits}/${possible_detections} (~ ${twodecimals}%)"
 
-        # Print this image's sum of possible_detections and actual_detections
-        echo "Found ${actual_detections}/${possible_detections} (~ $((\
-        ${actual_detections}.0/${possible_detections}.0))%)"
+        # Print the collective misses as of this image
+        twodecimals=$(printf '%.3f' \
+        "$((${misses}.0/${guesses}.0))") \
+        && echo "Falsely detected ${misses}/${guesses} (~ ${twodecimals}%)"
 
     done
 
     # Saving the average execution time of darknet
-    twodecimals=$((${darknet_exec_time} / ${#images[@]})) \
-    && echo "Darknet average detection execution time:\t${twodecimals}" \
+    twodecimals=$( printf '%.3f' "$((${darknet_exec_time} / ${#images[@]}))" ) \
+    && echo -e "Darknet average detection execution time:\t${twodecimals}" \
     >> ${path_collected_results}
 
 
@@ -107,26 +125,31 @@ for weight_name in ${weights[*]}; do
 	while read percentage; do
         avg_percent=$(( $avg_percent + $percentage ))
     done < ${path_result_percentages}
-
     avg_percent=$(( $avg_percent / $(cat ${path_result_percentages} | wc -l) ))
-    twodecimals=$(printf '%.2f' "${avg_percent}") # rounds to two decimals
-    echo "Average detection percentage: ${twodecimals}%" \
-    && echo "${weight_name} average detection percentage:\t${twodecimals}%" \
+
+    twodecimals=$(printf '%.3f' "${avg_percent}") \
+    && echo -e "${weight_name} average detection percentage:\t${twodecimals}%" \
     >> ${path_collected_results}
 
 
-    # Save how many actual detection occured out of possible detections
-    twodecimals=$(printf '%.2f' \
-    "$((${actual_detections}.0/${possible_detections}.0))") \
-    && echo "${weight_name} correctly detected ${actual_detections}\
-    /${possible_detections} (~ ${twodecimals}%)"
+    # Save information of hits with all images processed
+    twodecimals=$(printf '%.3f' \
+    "$((${hits}.0/${possible_detections}.0))") \
+    && echo -e "${weight_name} correctly detected\t${hits}/${possible_detections} (~ ${twodecimals}%)" \
+    >> ${path_collected_results}
+
+    # Save information of misses with all images processed
+    twodecimals=$(printf '%.3f' \
+    "$((${misses}.0/${guesses}.0))") \
+    && echo -e "${weight_name} falsely detected ${misses}/${guesses} (~ ${twodecimals}%)" \
+    >> ${path_collected_results}
 
 
     echo "" >> ${path_collected_results}
 done
 
 
-# Printing the results by reading the last line of each percentage file
+# Printing everything in the collected results txt file
 clear
 echo "Collected results:"
 while read result; do

@@ -45,10 +45,12 @@ for weight_name in ${weights[*]}; do
     darknet_exec_time=0.0
     avg_percent=0.0
 
+    number_of_cards=0
     possible_detections=0
     hits=0
     guesses=0
     misses=0
+    ignored=0
 
 
     # The paths of existing files and result saving destination
@@ -94,29 +96,50 @@ for weight_name in ${weights[*]}; do
 
         # Find how many correct guesses it had and how many wrong
         guesses=$(( ${guesses} + $(cat ${path_result_cards} | wc -l) ))
-        sort ${path_image_txt} | uniq > temp.txt
+        sort ${path_image_txt} | uniq > temp_sorted_actual.txt
+        sort ${path_result_cards} | uniq > temp_sorted_detected.txt
+
         while read possible; do
             hits=$(( ${hits} + $(cat ${path_result_cards} | grep ${possible} | wc -l) ))
             sed -i "/${possible}/d" ${path_result_cards}
-        done < temp.txt
-        rm temp.txt
+        done < temp_sorted_actual.txt
         misses=$(( ${misses} + $(cat ${path_result_cards} | wc -l) ))
 
+        number_of_cards=$(( ${number_of_cards} + $(cat temp_sorted_actual.txt | wc -l) ))
+        while read detection; do
+            sed -i "/${detection}/d" temp_sorted_actual.txt
+        done < temp_sorted_detected.txt
+        ignored=$(cat temp_sorted_actual.txt | wc -l)
+
+        rm temp_sorted_actual.txt
+        rm temp_sorted_detected.txt
+
+
         # Print the collective hits as of this image
-        twodecimals=$(printf '%.3f' \
-        "$((${hits}.0/${possible_detections}.0))") \
-        && echo "Correctly detected ${hits}/${possible_detections} (~ ${twodecimals}%)"
+        twodecimals=$(printf '%.2f' \
+        "$((${hits}.0/${possible_detections}.0*100.0))") \
+        && echo \
+        "Correct detection ${hits}/${possible_detections} (~ ${twodecimals}%)"
 
         # Print the collective misses as of this image
-        twodecimals=$(printf '%.3f' \
-        "$((${misses}.0/${guesses}.0))") \
-        && echo "Falsely detected ${misses}/${guesses} (~ ${twodecimals}%)"
+        twodecimals=$(printf '%.2f' \
+        "$((${misses}.0/${guesses}.0*100.0))") \
+        && echo \
+        "False detection ${misses}/${guesses} (~ ${twodecimals}%)"
+
+        # Print the collective ignored as of this image
+        twodecimals=$(printf '%.2f' \
+        "$((${ignored}.0/${number_of_cards}.0*100.0))") \
+        && echo \
+        "Ignored cards ${ignored}/${number_of_cards} (~ ${twodecimals}%)"
 
     done
 
+    echo "${weight_name} results:" >> ${path_collected_results}
+
     # Saving the average execution time of darknet
-    twodecimals=$( printf '%.3f' "$((${darknet_exec_time} / ${#images[@]}))" ) \
-    && echo -e "Darknet average detection execution time:\t${twodecimals}" \
+    twodecimals=$( printf '%.2f' "$((${darknet_exec_time} / ${#images[@]}))" ) \
+    && echo -e "Darknet execution time ..... ${twodecimals}s" \
     >> ${path_collected_results}
 
 
@@ -127,31 +150,40 @@ for weight_name in ${weights[*]}; do
     done < ${path_result_percentages}
     avg_percent=$(( $avg_percent / $(cat ${path_result_percentages} | wc -l) ))
 
-    twodecimals=$(printf '%.3f' "${avg_percent}") \
-    && echo -e "${weight_name} average detection percentage:\t${twodecimals}%" \
+    twodecimals=$(printf '%.2f' "${avg_percent}") \
+    && echo -e "Average detection percentage ${twodecimals}%" \
     >> ${path_collected_results}
 
 
     # Save information of hits with all images processed
-    twodecimals=$(printf '%.3f' \
-    "$((${hits}.0/${possible_detections}.0))") \
-    && echo -e "${weight_name} correctly detected\t${hits}/${possible_detections} (~ ${twodecimals}%)" \
+    twodecimals=$(printf '%.2f' \
+    "$((${hits}.0/${possible_detections}.0*100.0))") \
+    && echo -e \
+    "Correct detection .......... ${hits}/${possible_detections} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
     # Save information of misses with all images processed
-    twodecimals=$(printf '%.3f' \
-    "$((${misses}.0/${guesses}.0))") \
-    && echo -e "${weight_name} falsely detected ${misses}/${guesses} (~ ${twodecimals}%)" \
+    twodecimals=$(printf '%.2f' \
+    "$((${misses}.0/${guesses}.0*100.0))") \
+    && echo -e \
+    "False detection ............ ${misses}/${guesses} (~ ${twodecimals}%)" \
+    >> ${path_collected_results}
+
+    # Save information of ignored cards with all images processed
+    twodecimals=$(printf '%.2f' \
+    "$((${ignored}.0/${number_of_cards}.0*100.0))") \
+    && echo -e \
+    "Ignored cards .............. ${ignored}/${number_of_cards} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
 
-    echo "" >> ${path_collected_results}
+    echo "-" >> ${path_collected_results}
 done
 
 
 # Printing everything in the collected results txt file
 clear
-echo "Collected results:"
+echo "---------- Collected results: ----------"
 while read result; do
     echo "${result}"
 done < ${path_collected_results}

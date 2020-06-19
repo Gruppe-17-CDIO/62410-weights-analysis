@@ -110,7 +110,6 @@ path_temp_sorted_detected="test-output/temp_sorted_detected.txt"
 
 # Data analysis loop, goes through each image for each weights file
 for weight_name in ${files[*]}; do
-
     # Each weights file's results initialisation
     darknet_exec_time=0.0
     avg_percent=0.0

@@ -59,7 +59,7 @@ for weight_name in ${weights[*]}; do
 	path_result_percentages="test-results/${weight_name}-percents.txt"
 
 
-    echo "Performin analysis on ${weight_name}"
+    echo "performin analysis on ${weight_name}"
 
     # Looping through each image for the current weights file
     for image_name in ${images[*]}; do
@@ -76,7 +76,7 @@ for weight_name in ${weights[*]}; do
         ./darknet detector test cfg/owndata.data ${path_file_cfg} \
         ${path_file_weights} ${path_image_png} > ${path_result_full}
         end_time=$(date +%s.%N)
-        echo "Execution time $((end_time - start_time)) seconds"
+        echo "execution time $((end_time - start_time)) seconds"
         darknet_exec_time=$(($darknet_exec_time + (end_time - start_time)))
 
 
@@ -109,7 +109,7 @@ for weight_name in ${weights[*]}; do
         while read detection; do
             sed -i "/${detection}/d" temp_sorted_actual.txt
         done < temp_sorted_detected.txt
-        ignored=$(cat temp_sorted_actual.txt | wc -l)
+        ignored=$(( ${ignored} + $(cat temp_sorted_actual.txt | wc -l) ))
 
         rm temp_sorted_actual.txt
         rm temp_sorted_detected.txt
@@ -119,19 +119,19 @@ for weight_name in ${weights[*]}; do
         twodecimals=$(printf '%.2f' \
         "$((${hits}.0/${possible_detections}.0*100.0))") \
         && echo \
-        "Correct detection ${hits}/${possible_detections} (~ ${twodecimals}%)"
+        "correct detection ${hits}/${possible_detections} (~ ${twodecimals}%)"
 
         # Print the collective misses as of this image
         twodecimals=$(printf '%.2f' \
         "$((${misses}.0/${guesses}.0*100.0))") \
         && echo \
-        "False detection ${misses}/${guesses} (~ ${twodecimals}%)"
+        "false detection ${misses}/${guesses} (~ ${twodecimals}%)"
 
         # Print the collective ignored as of this image
         twodecimals=$(printf '%.2f' \
         "$((${ignored}.0/${number_of_cards}.0*100.0))") \
         && echo \
-        "Ignored cards ${ignored}/${number_of_cards} (~ ${twodecimals}%)"
+        "ignored cards ${ignored}/${number_of_cards} (~ ${twodecimals}%)"
 
     done
 
@@ -139,7 +139,7 @@ for weight_name in ${weights[*]}; do
 
     # Saving the average execution time of darknet
     twodecimals=$( printf '%.2f' "$((${darknet_exec_time} / ${#images[@]}))" ) \
-    && echo -e "Darknet execution time ..... ${twodecimals}s" \
+    && echo -e "darknet execution time ..... ${twodecimals}s" \
     >> ${path_collected_results}
 
 
@@ -151,7 +151,7 @@ for weight_name in ${weights[*]}; do
     avg_percent=$(( $avg_percent / $(cat ${path_result_percentages} | wc -l) ))
 
     twodecimals=$(printf '%.2f' "${avg_percent}") \
-    && echo -e "Average detection percentage ${twodecimals}%" \
+    && echo -e "average detection percentage ${twodecimals}%" \
     >> ${path_collected_results}
 
 
@@ -159,21 +159,21 @@ for weight_name in ${weights[*]}; do
     twodecimals=$(printf '%.2f' \
     "$((${hits}.0/${possible_detections}.0*100.0))") \
     && echo -e \
-    "Correct detection .......... ${hits}/${possible_detections} (~ ${twodecimals}%)" \
+    "correct detection .......... ${hits}/${possible_detections} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
     # Save information of misses with all images processed
     twodecimals=$(printf '%.2f' \
     "$((${misses}.0/${guesses}.0*100.0))") \
     && echo -e \
-    "False detection ............ ${misses}/${guesses} (~ ${twodecimals}%)" \
+    "false detection ............ ${misses}/${guesses} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
     # Save information of ignored cards with all images processed
     twodecimals=$(printf '%.2f' \
     "$((${ignored}.0/${number_of_cards}.0*100.0))") \
     && echo -e \
-    "Ignored cards .............. ${ignored}/${number_of_cards} (~ ${twodecimals}%)" \
+    "ignored cards .............. ${ignored}/${number_of_cards} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
 
@@ -183,7 +183,7 @@ done
 
 # Printing everything in the collected results txt file
 clear
-echo "---------- Collected results: ----------"
+echo "---------- collected analysis results ----------"
 while read result; do
     echo "${result}"
 done < ${path_collected_results}

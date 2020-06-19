@@ -7,9 +7,12 @@ echo "Before continuing, please make sure you have done the following:"
 echo "Necessary steps:"
 echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0"
 echo " - Backed up any important files in your darknet directory"
+echo " - Have unzip installed or already unzipped the test-images and test-files folders into darknet."
 
 echo "Recommended steps:"
 echo " - Placed this project in the same directory as darknet, so they share the same directory"
+echo " - Got your own weights or images? Then add them to the test-files or test-images folder, with"
+echo "   a .txt file describing contents or the .cfg file. Exactly like the other files in the folders."
 echo ""
 
 while [[ true ]]; do
@@ -27,20 +30,13 @@ while [[ true ]]; do
 done
 
 
-weights=("v3-tiny-14200" "v3-tiny-17600" "v3-tiny-18500" "v3-tiny-20000" \
-"v3-tiny-21000" "v3-tiny-22000" "v3-retrained")
-
-images=("all-clubs" "all-diamonds" "all-hearts" "all-spades" \
-"overlaying-clubs-diamonds" "overlaying-spades-hearts" \
-"solitaire-chaotic-nomove-nodeck" "solitaire-neat-nomove-nodeck" \
-"solitaire-simple-nomove-nodeck")
-
+absolute_path=""
 
 # Looking for the darknet outside the current directory
 # If no success then it asks the user for the directory path
 if [ -d "../darknet" ]; then
-    cd ../darknet && \
-    echo "Found the darknet folder outside the current directory. Entering."
+    absolute_path="../darknet" && \
+    echo "Found the darknet folder outside the current directory."
 else
     echo "This project does not share directory with darknet."
     while [[ true ]]; do
@@ -49,8 +45,8 @@ else
         echo ""
 
         if [ "$(basename ${absolute_path})" = "darknet" ]; then
-            cd ${absolute_path} && \
-            echo "Looks like darknet alright. Entering." && break
+            [ -d ${absolute_path} ] && \
+            echo "Looks like darknet alright." && break
 
             echo "Unable to change directory to the specified path. Try again."
             continue
@@ -61,34 +57,47 @@ else
         echo "(y/n)"
         read answer
         echo ""
-        if [ "${answer}" = "y" ]; then
-            cd ${absolute_path}
-            break
-        fi
+
+        [ "${answer}" = "y" ] && break
 
         echo "The darknet directory needs to be specified."
     done
 fi
 
 
+# Unzipping test material if folders are non-existent
+echo "Unzipping test-files.zip"
+[ ! -d "${absolute_path}/test-files" ] && cp test-files.zip ${absolute_path} \
+&& unzip -q ${absolute_path}/test-files.zip -d ${absolute_path} \
+&& rm -rf ${absolute_path}/test-files.zip
+
+echo "Unzipping test-images.zip"
+[ ! -d "${absolute_path}/test-images" ] && cp test-images.zip ${absolute_path} \
+&& unzip -q ${absolute_path}/test-images.zip -d ${absolute_path} && \
+rm -rf ${absolute_path}/test-images.zip
+
+
+echo "" && cd ${absolute_path} && echo "Entered the darknet directory. ($( pwd ))"
+
+cd test-files && find . -name '*.weights' | cut -d "." -f 2 | cut -d "/" -f 2 \
+| sort > 0contents.txt && cd ..
+files=()
+while IFS= read -r line; do
+    files+=("$line")
+done < test-files/0contents.txt
+echo "Loaded array: ${files[*]}"
+
+cd test-images && find . -name '*.png' | cut -d "." -f 2 | cut -d "/" -f 2 \
+| sort > 0contents.txt && cd ..
+images=()
+while IFS= read -r line; do
+   images+=("$line")
+done < test-images/0contents.txt
+echo "Loaded array: ${images[*]}"
+
+
 # Make or remake the test-output directory
-if [ -d "test-output" ]; then
-    while [[ true ]]; do
-        echo "Found an existing test-output directory. Would you like to delete it?"
-        echo "(y/n)"
-        read answer
-        echo ""
-        if [ "${answer}" = "y" ]; then
-            echo "Deleting test-output directory"
-            rm -rf test-output
-            break
-        elif [ "${answer}" = "n" ]; then
-            echo "Cannot proceed without deleting test-output directory."
-            exit
-        fi
-        echo "Unrecognized input."
-    done
-fi
+[ -d "test-output" ] && rm -rf test-output
 mkdir test-output && echo "Created a test-output directory."
 
 
@@ -100,7 +109,7 @@ path_temp_sorted_detected="test-output/temp_sorted_detected.txt"
 
 
 # Data analysis loop, goes through each image for each weights file
-for weight_name in ${weights[*]}; do
+for weight_name in ${files[*]}; do
 
     # Each weights file's results initialisation
     darknet_exec_time=0.0
@@ -120,7 +129,7 @@ for weight_name in ${weights[*]}; do
 	path_result_percentages="test-output/${weight_name}-percents.txt"
 
 
-    echo "performin analysis on ${weight_name}"
+    echo "" && echo "performin analysis on ${weight_name}"
 
     # Looping through each image for the current weights file
     for image_name in ${images[*]}; do

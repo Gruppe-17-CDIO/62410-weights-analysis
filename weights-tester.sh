@@ -1,4 +1,6 @@
+# author: David Fager s185120
 #!/bin/bash
+# This script is no longer in use. See the full-weights-analysis.zsh script instead.
 
 list=("v3-tiny-14200" "v3-tiny-17600" "v3-tiny-18500" "v3-tiny-20000" "v3-tiny-21000" "v3-tiny-22000" "v3-retrained")
 

@@ -37,6 +37,15 @@ mkdir test-results && echo "Created the test-results directory."
 
 
 path_collected_results="test-results/analysis-collected-results.out"
+echo "---------- collected analysis results ----------" >> ${path_collected_results}
+echo "How to read output:" >> ${path_collected_results}
+echo "darknet execution time .....: time in seconds for darknet to run its detection" >> ${path_collected_results}
+echo "average detection percentage: darknets average detection percent for each card" >> ${path_collected_results}
+echo "correct detection ..........: total corners detected with correct suit and value / total corners visible" >> ${path_collected_results}
+echo "false detection ............: total corners detected with a wrong suit / total corners detected" >> ${path_collected_results}
+echo "ignored cards ..............: total cards without any detected corner / total cards visible" >> ${path_collected_results}
+echo "" >> ${path_collected_results}
+
 
 # Data analysis loop, goes through each image for each weights file
 for weight_name in ${weights[*]}; do
@@ -183,7 +192,6 @@ done
 
 # Printing everything in the collected results txt file
 clear
-echo "---------- collected analysis results ----------"
 while read result; do
     echo "${result}"
 done < ${path_collected_results}

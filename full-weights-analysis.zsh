@@ -1,6 +1,32 @@
 # author: David Fager s185120
 #!/bin/zsh
 
+
+# Ensuring the user has setup their darknet correctly
+echo "Before continuing, please make sure you have done the following:"
+echo "Necessary steps:"
+echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0"
+echo " - Backed up any important files in your darknet directory"
+
+echo "Recommended steps:"
+echo " - Placed this project in the same directory as darknet, so they share the same directory"
+echo ""
+
+while [[ true ]]; do
+    echo "Continue?"
+    echo "(y/n)"
+    read answer
+    echo ""
+    if [ "${answer}" = "y" ]; then
+        break
+    elif [ "${answer}" = "n" ]; then
+        echo "Ok bye."
+        exit
+    fi
+    echo "Unrecognized input."
+done
+
+
 weights=("v3-tiny-14200" "v3-tiny-17600" "v3-tiny-18500" "v3-tiny-20000" \
 "v3-tiny-21000" "v3-tiny-22000" "v3-retrained")
 
@@ -51,6 +77,7 @@ if [ -d "test-output" ]; then
         echo "Found an existing test-output directory. Would you like to delete it?"
         echo "(y/n)"
         read answer
+        echo ""
         if [ "${answer}" = "y" ]; then
             echo "Deleting test-output directory"
             rm -rf test-output

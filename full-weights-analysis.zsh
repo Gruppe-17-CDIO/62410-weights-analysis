@@ -202,13 +202,13 @@ for weight_name in ${files[*]}; do
         twodecimals=$(printf '%.2f' \
         "$((${hits}.0/${possible_detections}.0*100.0))") \
         && echo \
-        "correct detection ${hits}/${possible_detections} (~ ${twodecimals}%)"
+        "correct detections ${hits}/${possible_detections} (~ ${twodecimals}%)"
 
         # Print the collective misses as of this image
         twodecimals=$(printf '%.2f' \
         "$((${misses}.0/${guesses}.0*100.0))") \
         && echo \
-        "falsely detected suits ${misses}/${guesses} (~ ${twodecimals}%)"
+        "impossible detections ${misses}/${guesses} (~ ${twodecimals}%)"
 
         # Print the collective ignored as of this image
         twodecimals=$(printf '%.2f' \

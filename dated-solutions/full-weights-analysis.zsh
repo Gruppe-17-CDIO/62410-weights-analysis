@@ -114,6 +114,12 @@ path_temp_sorted_actual="test-output/temp_sorted_actual.txt"
 path_temp_sorted_detected="test-output/temp_sorted_detected.txt"
 
 
+# Warm up the darknet detector
+echo "Running a darknet warmup ..."
+./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg \
+test-files/v3-retrained.weights test-images/overlaying-clubs-diamonds.png
+
+
 # Data analysis loop, goes through each image for each weights file
 for weight_name in ${files[*]}; do
     # Each weights file's results initialisation
@@ -241,14 +247,14 @@ for weight_name in ${files[*]}; do
     twodecimals=$(printf '%.2f' \
     "$((${hits}.0/${possible_detections}.0*100.0))") \
     && echo -e \
-    "correct detection .......... ${hits}/${possible_detections} (~ ${twodecimals}%)" \
+    "correct detections ......... ${hits}/${possible_detections} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
     # Save information of misses with all images processed
     twodecimals=$(printf '%.2f' \
     "$((${misses}.0/${guesses}.0*100.0))") \
     && echo -e \
-    "falsely detected suits ..... ${misses}/${guesses} (~ ${twodecimals}%)" \
+    "impossible detections ...... ${misses}/${guesses} (~ ${twodecimals}%)" \
     >> ${path_collected_results}
 
     # Save information of ignored cards with all images processed
@@ -271,11 +277,15 @@ echo "darknet execution time .....: time in seconds for darknet to run its detec
 >> ${path_collected_results}
 echo "average detection percentage: darknets average detection percent for each card" \
 >> ${path_collected_results}
-echo "correct detection ..........: total corners detected with correct suit and value / total corners visible" \
+echo "correct detections .........: total corners detected with correct suit and value / total corners visible" \
 >> ${path_collected_results}
-echo "false detection ............: total corners detected with a wrong suit / total corners detected" \
+echo "impossible detections ......: total corners detected with a wrong suit / total corners detected" \
 >> ${path_collected_results}
 echo "ignored cards ..............: total cards without any detected corner / total cards visible" \
+>> ${path_collected_results}
+echo "NOTE: as the included models where only trained on the diagonal corners, then a correct detections score of around 50% is optimal." \
+>> ${path_collected_results}
+echo "All corners were counted because detections of the corners not on the diagonal is occasional." \
 >> ${path_collected_results}
 echo "" >> ${path_collected_results}
 

@@ -3,11 +3,12 @@
 
 
 # Ensuring the user has setup their darknet correctly
-echo "Before continuing, please make sure you have done the following:"
+echo "Before continuing, please make sure that you have done the following:"
 echo "Necessary steps:"
 echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0"
 echo " - Backed up any important files in your darknet directory"
-echo " - Have unzip installed or already unzipped the test-images and test-files folders into darknet."
+echo " - Have downloaded and unzipped the test-files and test-images files into the darknet directory."
+echo "   Link: https://drive.google.com/file/d/1jrqQi3YgKfDs7x58z_3cxXpseI7dJgDM/view"
 
 echo "Recommended steps:"
 echo " - Placed this project in the same directory as darknet, so they share the same directory"
@@ -65,20 +66,25 @@ else
 fi
 
 
+# This became impossible because GitHub has file size limits on uploads
 # Unzipping test material if folders are non-existent
-echo "Unzipping test-files.zip"
-[ ! -d "${absolute_path}/test-files" ] && cp test-files.zip ${absolute_path} \
-&& unzip -q ${absolute_path}/test-files.zip -d ${absolute_path} \
-&& rm -rf ${absolute_path}/test-files.zip
+#echo "Unzipping test-files.zip"
+#[ ! -d "${absolute_path}/test-files" ] && cp test-files.zip ${absolute_path} \
+#&& unzip -q ${absolute_path}/test-files.zip -d ${absolute_path} \
+#&& rm -rf ${absolute_path}/test-files.zip
 
-echo "Unzipping test-images.zip"
-[ ! -d "${absolute_path}/test-images" ] && cp test-images.zip ${absolute_path} \
-&& unzip -q ${absolute_path}/test-images.zip -d ${absolute_path} && \
-rm -rf ${absolute_path}/test-images.zip
+#echo "Unzipping test-images.zip"
+#[ ! -d "${absolute_path}/test-images" ] && cp test-images.zip ${absolute_path} \
+#&& unzip -q ${absolute_path}/test-images.zip -d ${absolute_path} && \
+#rm -rf ${absolute_path}/test-images.zip
 
 
-echo "" && cd ${absolute_path} && echo "Entered the darknet directory. ($( pwd ))"
+# Entering the darknet directory
+echo "" && cd ${absolute_path} && echo "Entered the darknet directory. ($( pwd )))"
 
+
+# Reading the unique names of the contents in the test-images and test-files folders, then makes
+# an array of those names. This ensures that the user can add weights and images themselves.
 cd test-files && find . -name '*.weights' | cut -d "." -f 2 | cut -d "/" -f 2 \
 | sort > 0contents.txt && cd ..
 files=()
@@ -87,8 +93,8 @@ while IFS= read -r line; do
 done < test-files/0contents.txt
 echo "Loaded array: ${files[*]}"
 
-cd test-images && find . -name '*.png' | cut -d "." -f 2 | cut -d "/" -f 2 \
-| sort > 0contents.txt && cd ..
+cd test-images && (find . -name '*.png' && find . -name '*.jpg') \
+| cut -d "." -f 2 | cut -d "/" -f 2 | sort > 0contents.txt && cd ..
 images=()
 while IFS= read -r line; do
    images+=("$line")
@@ -128,25 +134,33 @@ for weight_name in ${files[*]}; do
 	path_result_percentages="test-output/${weight_name}-percents.txt"
 
 
-    echo "" && echo "performin analysis on ${weight_name}"
-
     # Looping through each image for the current weights file
     for image_name in ${images[*]}; do
 
         # Path of image and results destinations
-        path_image_png="test-images/${image_name}.png"
+        path_image=""
+        if [ -e "test-images/${image_name}.png" ]; then
+            path_image="test-images/${image_name}.png"
+        elif [ -e "test-images/${image_name}.jpg" ]; then
+            path_image="test-images/${image_name}.jpg"
+        else
+            echo "Error finding the image path. Exiting." && exit
+        fi
+
         path_image_txt="test-images/${image_name}.txt"
         path_result_full="test-output/${weight_name}-${image_name}.out"
         path_result_cards="test-output/${weight_name}-${image_name}-cards.txt"
 
 
+        echo "" && echo "performing analysis with '${weight_name}' on '${image_name}' (${path_image})"
+
         # Darknet performing its detection and saving the output
         start_time=$(date +%s.%N)
         ./darknet detector test cfg/owndata.data ${path_file_cfg} \
-        ${path_file_weights} ${path_image_png} > ${path_result_full}
+        ${path_file_weights} ${path_image} > ${path_result_full}
         end_time=$(date +%s.%N)
-        echo "execution time $((end_time - start_time)) seconds"
-        darknet_exec_time=$(($darknet_exec_time + (end_time - start_time)))
+        echo "execution time $(( ${end_time} - ${start_time} )) seconds"
+        darknet_exec_time=$(( ${darknet_exec_time} + (${end_time} - ${start_time}) ))
 
 
         # Taking the output and trimming it to the percentage integer

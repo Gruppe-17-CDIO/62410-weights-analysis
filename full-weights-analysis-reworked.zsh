@@ -56,10 +56,9 @@ for weight_name in ${files[*]}; do
     # Weights specific variables
     exec_time=0.0
     avg_percent=0.0
-    total_corners=0
+    found_cards=0
     total_cards=0
-    guesses_cards=0
-
+    total_corners=0
     corners_correct=0
     corners_wrong=0
     corners_missed=0
@@ -72,7 +71,8 @@ for weight_name in ${files[*]}; do
         # Image specific paths
         path_image=""
         path_image_txt="test-images/${image_name}.txt"
-        path_result_full="test-output/${weight_name}-${image_name}.out"
+        path_result="test-output/${weight_name}-${image_name}.out"
+        path_result_full="test-output/${weight_name}-${image_name}-separated.out"
     	path_result_percentages="test-output/${weight_name}${image_name}-percents.out"
         path_result_detections="test-output/${weight_name}-${image_name}-detections.out"
 
@@ -84,29 +84,40 @@ for weight_name in ${files[*]}; do
         # Darknet detection
         echo "" && echo "performing analysis with '${weight_name}' on '${path_image}'"
         start_time=$(date +%s.%N)
-        ./darknet detector test cfg/owndata.data ${path_file_cfg} ${path_file_weights} ${path_image} > ${path_result_full}
+        ./darknet detector test cfg/owndata.data ${path_file_cfg} ${path_file_weights} ${path_image} > ${path_result}
         end_time=$(date +%s.%N)
         exec_time=$(( ${exec_time} + (${end_time} - ${start_time}) ))
 
-        sed -i '1d' ${path_result_full}
+        sed -i '1d' ${path_result}
+        total_corners=$(( ${total_corners} + $(cat ${path_result} | wc -l) ))
 
         # Handle multiple guesses
-        
+        while read unseparated; do
+            spaces=$(echo "${unseparated}" | grep -o ' ' | wc -l)
+            val1=$(echo "${unseparated}" | cut -d " " -f $(( ${spaces} - 2 )))
+            val2=$(echo "${unseparated}" | cut -d " " -f $(( ${spaces} - 1 )))
+            val3=$(echo "${unseparated}" | cut -d " " -f $(( ${spaces} + 0 )))
+            val4=$(echo "${unseparated}" | cut -d " " -f $(( ${spaces} + 1 )))
+            spaces=$(( ${spaces} - 3 ))
+
+            index=1
+            while  [ ${index} -lt ${spaces} ]; do
+                guess=$(echo "${unseparated}" | cut -d " " -f ${index})
+                percent=$(echo "${unseparated}" | cut -d " " -f $(( ${index} + 1)))
+                echo "${guess} ${percent} ${val1} ${val2} ${val3} ${val4}" >> ${path_result_full}
+                index=$(( ${index} + 2 ))
+            done
+        done < ${path_result}
 
         # Add all detected percentages and count detected corners
         cat ${path_result_full} | cut -d " " -f 2 | cut -d "%" -f 1 > ${path_result_percentages}
         while read percentage; do
             avg_percent=$(( ${avg_percent} + ${percentage} ))
         done < ${path_result_percentages}
-        total_corners=$(( ${total_corners} + $(cat ${path_result_percentages} | wc -l) ))
-
-        # Count number of guesses
-        #guesses_cards=$(( ${guesses_cards} + $(cat ${path_result_full} | cut -d " " -f 1 | sed '1d' | uniq | wc -l) ))
 
         total_cards=$(( ${total_cards} + $(cat ${path_image_txt} | uniq | wc -l) ))
 
         # Properly count correct and wrong guesses
-        cat ${path_result_full}
         while read actual; do
             actual_card=$(echo "${actual}" | cut -d " " -f 1)
             actual_centerX=$(( 1920.0 / 100.0 * $(echo "${actual}" | cut -d " " -f 2) * 100.0 ))
@@ -137,6 +148,7 @@ for weight_name in ${files[*]}; do
                     else
                         corners_wrong=$(( ${corners_wrong} + 1 ))
                     fi
+                    echo "${detected}" | cut -d " " -f 1 >> ${path_result_detections}
                 fi
             done < ${path_result_full}
 
@@ -148,12 +160,13 @@ for weight_name in ${files[*]}; do
 
     avg_percent=$(( ${avg_percent} / ${total_corners} ))
     exec_time=$(( ${exec_time} / ${#images[@]} ))
+    found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | wc -l) ))
 
     # Adding this weights results to the results file
     printf "${weight_name} results:\n" >> ${path_collected_results}
     printf "darknet detection time %.2fs\n" "${exec_time}" >> ${path_collected_results}
     printf "average percent ...... %.2f%%\n" "${avg_percent}" >> ${path_collected_results}
-    #printf "detections ........... %s (%.2f%%)\n" "${guesses_cards} / ${total_cards}" "$(( ${guesses_cards}.0/${total_cards}.0*100.0 ))" >> ${path_collected_results}
+    printf "cards found .......... %d / %d (%.2f%%)\n" "${found_cards}" "${total_cards}"
     printf "correct corners ...... %d / %d (%.2f%%)\n" "${corners_correct}" "${total_corners}" "$(( ${corners_correct}.0 / $total_corners.0 * 100.0 ))"
     printf "wrong corners ........ %d / %d (%.2f%%)\n" "${corners_wrong}" "${total_corners}" "$(( ${corners_wrong}.0 / $total_corners.0 * 100.0 ))"
     printf "missed corners ....... %d / %d (%.2f%%)\n" "${corners_missed}" "${total_corners}" "$(( ${corners_missed}.0 / $total_corners.0 * 100.0 ))"

@@ -6,6 +6,8 @@ This script is a part of a project in course 62410 CDIO-project at Denmarks Tech
 The model is then used in another program, to be able to provide the solution, step by step, in a solitaire, that has its playing cards recognised via the model and a webcam.  
 The image.c file in this project, originates from pjreddie's Darknet project, and is modified to fit this script.
 
+The scripts in the 'dated-solutions' folder has been improved upon and therefore they are not used anymore.
+
 ## Links
 The test images and files used in this script is located on Google Drive at:  
 * a

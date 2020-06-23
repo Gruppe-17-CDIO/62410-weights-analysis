@@ -162,7 +162,7 @@ for weight_name in ${files[*]}; do
 
         found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | sort | uniq | wc -l) ))
 
-        [ "${image_name}" = "${images[4]}" ] && break # REMOVE THE COMMENT TO DEBUG
+        #[ "${image_name}" = "${images[4]}" ] && break # REMOVE THE COMMENT TO DEBUG
     done
 
     avg_percent=$(( ${avg_percent} / ${avg_count} ))
@@ -180,10 +180,6 @@ for weight_name in ${files[*]}; do
     cat ${path_collected_results} | tail -8
 
 done
-
-#echo "darknet detection time: average of how fast darknet loaded the weights and detected on the image" >> ${path_collected_results}
-#echo "average percent ......: average of darknets percent certainty it found a given card" >> ${path_collected_results}
-#echo "detections ...........: how many cards darknet detected out of how many cards were in the image" >> ${path_collected_results}
 
 # Printing everything calculated
 clear

@@ -41,7 +41,7 @@ cd test-images && (find . -name '*.png' && find . -name '*.jpg') | cut -d "." -f
 while IFS= read -r line; do
    images+=("$line")
 done < test-images/0contents.txt
-images=("minitest") # outcomment for debugging
+#images=("minitest") # remove comment for debugging
 echo "Loaded array: ${images[*]}"
 
 # Make the test-output directory
@@ -156,11 +156,12 @@ for weight_name in ${files[*]}; do
 
         done < ${path_image_txt}
 
+        found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | wc -l) ))
+
     done
 
     avg_percent=$(( ${avg_percent} / ${total_corners} ))
     exec_time=$(( ${exec_time} / ${#images[@]} ))
-    found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | wc -l) ))
 
     # Adding this weights results to the results file
     printf "${weight_name} results:\n" >> ${path_collected_results}

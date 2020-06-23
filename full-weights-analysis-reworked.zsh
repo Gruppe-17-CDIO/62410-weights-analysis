@@ -25,7 +25,7 @@ read answer && [ "${answer}" = "y" ] || exit
 [ -e "../darknet" ] && absolute_path="../darknet" && echo "Darknet folder found."
 [ ! -e "../darknet" ] && echo "Please specify the absolute path to darknet:" && read absolute_path
 [ ! -e ${absolute_path} ] && echo "Error in darknet path" && exit
-echo "" && cd ${absolute_path} && echo "Entered the darknet directory. ($( pwd )))"
+echo "" && cd ${absolute_path} && echo "Entered the darknet directory. ($( pwd ))"
 
 # Getting unique names of the test-files folder contents and makes an array for each
 [ ! -e "test-files" ] && echo "Failed to find the test-files directory" && exit
@@ -49,7 +49,9 @@ echo "Loaded array: ${images[*]}"
 mkdir test-output && echo "Created a test-output directory."
 
 # Warm up the darknet detector
-echo "Running a darknet warmup" && ./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg test-files/v3-retrained.weights test-images/minitest.png
+echo "Running a darknet warmup with ${images[1]}"
+[ -e "test-images/${images[1]}.png" ] && ./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg test-files/v3-retrained.weights test-images/${images[1]}.png
+[ -e "test-images/${images[1]}.jpg" ] && ./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg test-files/v3-retrained.weights test-images/${images[1]}.jpg
 
 echo "---------- collected analysis results ----------" > ${path_collected_results}
 for weight_name in ${files[*]}; do
@@ -167,10 +169,10 @@ for weight_name in ${files[*]}; do
     printf "${weight_name} results:\n" >> ${path_collected_results}
     printf "darknet detection time %.2fs\n" "${exec_time}" >> ${path_collected_results}
     printf "average percent ...... %.2f%%\n" "${avg_percent}" >> ${path_collected_results}
-    printf "cards found .......... %d / %d (%.2f%%)\n" "${found_cards}" "${total_cards}"
-    printf "correct corners ...... %d / %d (%.2f%%)\n" "${corners_correct}" "${total_corners}" "$(( ${corners_correct}.0 / $total_corners.0 * 100.0 ))"
-    printf "wrong corners ........ %d / %d (%.2f%%)\n" "${corners_wrong}" "${total_corners}" "$(( ${corners_wrong}.0 / $total_corners.0 * 100.0 ))"
-    printf "missed corners ....... %d / %d (%.2f%%)\n" "${corners_missed}" "${total_corners}" "$(( ${corners_missed}.0 / $total_corners.0 * 100.0 ))"
+    printf "cards found .......... %d / %d (%.2f%%)\n" "${found_cards}" "${total_cards}" >> ${path_collected_results}
+    printf "correct corners ...... %d / %d (%.2f%%)\n" "${corners_correct}" "${total_corners}" "$(( ${corners_correct}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
+    printf "wrong corners ........ %d / %d (%.2f%%)\n" "${corners_wrong}" "${total_corners}" "$(( ${corners_wrong}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
+    printf "missed corners ....... %d / %d (%.2f%%)\n" "${corners_missed}" "${total_corners}" "$(( ${corners_missed}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
     printf "\n" >> ${path_collected_results}
 
 done

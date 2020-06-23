@@ -10,15 +10,16 @@ path_collected_results="analysis-collected-results.out"
 # Asks if the user has set everything up
 echo "Before continuing, please make sure that you have done the following:"
 echo "Necessary steps:"
-echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0"
-echo " - Backed up any important files in your darknet directory"
-echo " - Downloaded and unzipped the test-files and test-images files into the darknet directory."
-echo "   Link: https://drive.google.com/file/d/1jrqQi3YgKfDs7x58z_3cxXpseI7dJgDM/view"
+echo " - Replaced this project's image.c file with the one in darknets src folder."
+echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0."
+echo " - Backed up any important files in your darknet directory."
+echo " - Downloaded and unzipped the test-files and test-images folders into the darknet directory."
+echo "   Link: -"
 echo "Recommended steps:"
-echo " - Placed this project in the same directory as darknet, so they share the same directory"
+echo " - Placed this project in the same directory as darknet, so they share the same directory."
 echo " - Got your own weights or images? Then add them to the test-files or test-images folder, with"
 echo "   a .txt file describing contents or the .cfg file. Exactly like the other files in the folders."
-echo "\nContinue\n(y/n)"
+echo "\nContinue?\n(y/n)"
 read answer && [ "${answer}" = "y" ] || exit
 
 # Looks for the darknet directory and enters it
@@ -41,7 +42,6 @@ cd test-images && (find . -name '*.png' && find . -name '*.jpg') | cut -d "." -f
 while IFS= read -r line; do
    images+=("$line")
 done < test-images/0contents.txt
-#images=("minitest") # remove comment for debugging
 echo "Loaded array: ${images[*]}"
 
 # Make the test-output directory
@@ -58,6 +58,7 @@ for weight_name in ${files[*]}; do
     # Weights specific variables
     exec_time=0.0
     avg_percent=0.0
+    avg_count=0
     found_cards=0
     total_cards=0
     total_corners=0
@@ -75,7 +76,7 @@ for weight_name in ${files[*]}; do
         path_image_txt="test-images/${image_name}.txt"
         path_result="test-output/${weight_name}-${image_name}.out"
         path_result_full="test-output/${weight_name}-${image_name}-separated.out"
-    	path_result_percentages="test-output/${weight_name}${image_name}-percents.out"
+    	path_result_percentages="test-output/${weight_name}-${image_name}-percents.out"
         path_result_detections="test-output/${weight_name}-${image_name}-detections.out"
 
         # Is image png or jpg
@@ -91,7 +92,7 @@ for weight_name in ${files[*]}; do
         exec_time=$(( ${exec_time} + (${end_time} - ${start_time}) ))
 
         sed -i '1d' ${path_result}
-        total_corners=$(( ${total_corners} + $(cat ${path_result} | wc -l) ))
+        total_corners=$(( ${total_corners} + $(cat ${path_image_txt} | wc -l) ))
 
         # Handle multiple guesses
         while read unseparated; do
@@ -116,8 +117,9 @@ for weight_name in ${files[*]}; do
         while read percentage; do
             avg_percent=$(( ${avg_percent} + ${percentage} ))
         done < ${path_result_percentages}
+        avg_count=$(( ${avg_count} + $(cat ${path_result_percentages} | wc -l) ))
 
-        total_cards=$(( ${total_cards} + $(cat ${path_image_txt} | uniq | wc -l) ))
+        total_cards=$(( ${total_cards} + $(cat ${path_image_txt} | cut -d " " -f 1 | sort | uniq | wc -l) ))
 
         # Properly count correct and wrong guesses
         while read actual; do
@@ -158,28 +160,30 @@ for weight_name in ${files[*]}; do
 
         done < ${path_image_txt}
 
-        found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | wc -l) ))
+        found_cards=$(( ${found_cards} + $(cat ${path_result_detections} | sort | uniq | wc -l) ))
 
+        [ "${image_name}" = "${images[4]}" ] && break # REMOVE THE COMMENT TO DEBUG
     done
 
-    avg_percent=$(( ${avg_percent} / ${total_corners} ))
+    avg_percent=$(( ${avg_percent} / ${avg_count} ))
     exec_time=$(( ${exec_time} / ${#images[@]} ))
 
     # Adding this weights results to the results file
     printf "${weight_name} results:\n" >> ${path_collected_results}
     printf "darknet detection time %.2fs\n" "${exec_time}" >> ${path_collected_results}
     printf "average percent ...... %.2f%%\n" "${avg_percent}" >> ${path_collected_results}
-    printf "cards found .......... %d / %d (%.2f%%)\n" "${found_cards}" "${total_cards}" >> ${path_collected_results}
+    printf "cards found .......... %d / %d (%.2f%%)\n" "${found_cards}" "${total_cards}" "$(( ${found_cards}.0 / ${total_cards}.0 * 100.0))" >> ${path_collected_results}
     printf "correct corners ...... %d / %d (%.2f%%)\n" "${corners_correct}" "${total_corners}" "$(( ${corners_correct}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
     printf "wrong corners ........ %d / %d (%.2f%%)\n" "${corners_wrong}" "${total_corners}" "$(( ${corners_wrong}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
     printf "missed corners ....... %d / %d (%.2f%%)\n" "${corners_missed}" "${total_corners}" "$(( ${corners_missed}.0 / $total_corners.0 * 100.0 ))" >> ${path_collected_results}
     printf "\n" >> ${path_collected_results}
+    cat ${path_collected_results} | tail -8
 
 done
 
-echo "darknet detection time: average of how fast darknet loaded the weights and detected on the image" >> ${path_collected_results}
-echo "average percent ......: average of darknets percent certainty it found a given card" >> ${path_collected_results}
-echo "detections ...........: how many cards darknet detected out of how many cards were in the image" >> ${path_collected_results}
+#echo "darknet detection time: average of how fast darknet loaded the weights and detected on the image" >> ${path_collected_results}
+#echo "average percent ......: average of darknets percent certainty it found a given card" >> ${path_collected_results}
+#echo "detections ...........: how many cards darknet detected out of how many cards were in the image" >> ${path_collected_results}
 
 # Printing everything calculated
 clear

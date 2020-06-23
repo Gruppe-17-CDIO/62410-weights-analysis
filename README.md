@@ -8,17 +8,22 @@ The image.c file in this project, originates from pjreddie's Darknet project, an
 
 The scripts in the 'dated-solutions' folder has been improved upon and therefore they are not used anymore.
 
+The test images were manually labeled with the labelimg project. See 'Links' for source.
+
 ## Links
+Labelimg by tzutalin:
+* https://github.com/tzutalin/labelImg
+
 The test images and files used in this script is located on Google Drive at:  
-* a
+* not made yet
 
 The Darknet repository by pjreddie:  
-* a (Where the image.c file is from)
+* https://github.com/pjreddie/darknet (Where the image.c file is from)
 
 The other GitHub projects, that are part of the courses project:  
-* a
-* a
-* a
+* https://github.com/ErlendTyrmi/Gruppe17_SolitaireRobot
+* https://github.com/JustusGammelgaard/YOLO
+* https://github.com/Gruppe-17-CDIO/DockerGPU
 
 ## How to use
 1. Make sure you have zsh: $ sudo apt-get install zsh

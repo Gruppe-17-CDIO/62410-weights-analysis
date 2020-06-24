@@ -49,9 +49,9 @@ echo "Loaded array: ${images[*]}"
 mkdir test-output && echo "Created a test-output directory."
 
 # Warm up the darknet detector
-echo "Running a darknet warmup with ${images[1]}"
-[ -e "test-images/${images[1]}.png" ] && ./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg test-files/v3-retrained.weights test-images/${images[1]}.png
-[ -e "test-images/${images[1]}.jpg" ] && ./darknet detector test cfg/owndata.data test-files/v3-retrained.cfg test-files/v3-retrained.weights test-images/${images[1]}.jpg
+echo "Running a darknet warmup with weights ${files[1]} and image ${images[1]}"
+[ -e "test-images/${images[1]}.png" ] && ./darknet detector test cfg/owndata.data test-files/${files[1]}.cfg test-files/${files[1]}.weights test-images/${images[1]}.png
+[ -e "test-images/${images[1]}.jpg" ] && ./darknet detector test cfg/owndata.data test-files/${files[1]}.cfg test-files/${files[1]}.weights test-images/${images[1]}.jpg
 
 echo "---------- collected analysis results ----------" > ${path_collected_results}
 for weight_name in ${files[*]}; do

@@ -119,8 +119,6 @@ for weight_name in ${files[*]}; do
         done < ${path_result_percentages}
         avg_count=$(( ${avg_count} + $(cat ${path_result_percentages} | wc -l) ))
 
-        total_cards=$(( ${total_cards} + $(cat ${path_image_txt} | cut -d " " -f 1 | sort | uniq | wc -l) ))
-
         # Properly count correct and wrong guesses
         while read actual; do
             actual_card=$(echo "${actual}" | cut -d " " -f 1)
@@ -165,6 +163,7 @@ for weight_name in ${files[*]}; do
         #[ "${image_name}" = "${images[4]}" ] && break # REMOVE THE COMMENT TO DEBUG
     done
 
+    total_cards=$(( ${total_corners} / 2 ))
     avg_percent=$(( ${avg_percent} / ${avg_count} ))
     exec_time=$(( ${exec_time} / ${#images[@]} ))
 

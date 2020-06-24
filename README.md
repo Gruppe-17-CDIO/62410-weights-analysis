@@ -12,7 +12,7 @@ The test images were manually labeled with the labelimg project. See 'Links' for
 
 ## Links
 * Labelimg by tzutalin: https://github.com/tzutalin/labelImg  
-* The test images and files used in this script is located on Google Drive at: https://drive.google.com/file/d/19x-HgqHERZVd2snFWswhtmLgVYmHQyjU/view  
+* The test images and files used in this script is located on Google Drive at: https://drive.google.com/file/d/1MyD3micWIgTNDQM6DGov7u5WUdwYfUHC/view  
 * The Darknet repository by pjreddie: https://github.com/pjreddie/darknet (Where the image.c file is from)  
 * The other GitHub projects, that are part of the courses project: https://github.com/Gruppe-17-CDIO  
 

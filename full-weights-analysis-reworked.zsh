@@ -14,7 +14,7 @@ echo " - Replaced this project's image.c file with the one in darknets src folde
 echo " - Compiled (with 'make') the darknet project with gpu=1, cudnn=1 and opencv=0."
 echo " - Backed up any important files in your darknet directory."
 echo " - Downloaded and unzipped the test-files and test-images folders into the darknet directory."
-echo "   Link: https://drive.google.com/file/d/19x-HgqHERZVd2snFWswhtmLgVYmHQyjU/view"
+echo "   Link: https://drive.google.com/file/d/1MyD3micWIgTNDQM6DGov7u5WUdwYfUHC/view"
 echo "Recommended steps:"
 echo " - Placed this project in the same directory as darknet, so they share the same directory."
 echo " - Got your own weights or images? Then add them to the test-files or test-images folder, with"
